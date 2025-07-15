@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 
-// OUTSIDE the class
 Map<String, dynamic> applyPreferencesInBackground(Map<String, dynamic> input) {
   final cache = Map<String, dynamic>.from(input['cache']);
   String value = input['value'];

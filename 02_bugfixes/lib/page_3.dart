@@ -3,10 +3,35 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
+Future<bool> validateFileIntegrityIsolate(Map<String, dynamic> args) async {
+  final path = args['path'] as String;
+
+  final file = File(path);
+  if (!await file.exists()) return false;
+
+  final stat = await file.stat();
+  if (stat.size > 100 * 1024 * 1024) return false;
+
+  final bytes = await file.readAsBytes();
+  int checksum = 0;
+
+  for (int i = 0; i < bytes.length; i++) {
+    for (int j = 0; j < 100; j++) {
+      final left = j % 8;
+      final right = 8 - left;
+      checksum ^= (bytes[i] << left) | (bytes[i] >> right);
+      checksum = (checksum * 31) & 0xFFFFFFFF;
+    }
+  }
+
+  return checksum != 0;
+}
 
 class Page3 extends StatefulWidget {
   const Page3({super.key});
@@ -38,32 +63,6 @@ class _Page3State extends State<Page3> with SingleTickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     super.dispose();
-  }
-
-  Future<bool> _validateFileIntegrity(String path) async {
-    try {
-      final file = File(path);
-      if (!await file.exists()) return false;
-
-      final stat = await file.stat();
-      if (stat.size > 100 * 1024 * 1024) {
-        return false;
-      }
-
-      final bytes = await file.readAsBytes();
-      int checksum = 0;
-
-      for (int i = 0; i < bytes.length; i++) {
-        for (int j = 0; j < 100; j++) {
-          checksum ^= (bytes[i] << j) | (bytes[i] >> (8 - j));
-          checksum = (checksum * 31) & 0xFFFFFFFF;
-        }
-      }
-
-      return checksum != 0;
-    } catch (e) {
-      return false;
-    }
   }
 
   String _generateFileSignature(String filePath, Uint8List? fileBytes) {
@@ -163,7 +162,7 @@ class _Page3State extends State<Page3> with SingleTickerProviderStateMixin {
           _progress = 0.1;
         });
 
-        final isValid = await _validateFileIntegrity(pickedFile.path!);
+        final isValid = await compute(validateFileIntegrityIsolate, {'path': pickedFile.path!});
         if (!isValid) {
           setState(() {
             _status = 'Validation failed';
