@@ -7,6 +7,7 @@ import 'package:shift_handover_challenge/src/features/shift_handover/application
 import 'package:shift_handover_challenge/src/features/shift_handover/data/shift_handover_service.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/domain/note_type_enum.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/presentation/widgets/note_card.dart';
+import 'package:shift_handover_challenge/src/utils/context_extensions.dart';
 
 class ShiftHandoverScreen extends StatelessWidget {
   const ShiftHandoverScreen({Key? key}) : super(key: key);
@@ -41,20 +42,14 @@ class ShiftHandoverScreen extends StatelessWidget {
         body: BlocConsumer<ShiftHandoverBloc, ShiftHandoverState>(
           listener: (context, state) {
             if (state.error != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('An error occurred: ${state.error}'),
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-              );
+              context.showSnackbar(
+                  content: 'An error occurred: ${state.error}',
+                  backgroundColor: context.colorScheme.error);
             }
             if (state.report?.isSubmitted ?? false) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Report submitted successfully!'),
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                ),
-              );
+              context.showSnackbar(
+                  content: 'Report submitted successfully!',
+                  backgroundColor: context.colorScheme.secondary);
             }
           },
           builder: (context, state) {

@@ -14,6 +14,7 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
     on<LoadShiftReport>(_onLoadShiftReport);
     on<AddNewNote>(_onAddNewNote);
     on<SubmitReport>(_onSubmitReport);
+    add(const LoadShiftReport('current-user-id'));
   }
 
   Future<void> _onLoadShiftReport(
