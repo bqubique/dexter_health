@@ -167,6 +167,8 @@ class _Page3State extends State<Page3> with SingleTickerProviderStateMixin {
         if (!isValid) {
           setState(() {
             _status = 'Validation failed';
+            _progress = 0.0;
+            _importTimer.stop();
           });
           return;
         }

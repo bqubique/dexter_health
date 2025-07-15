@@ -11,6 +11,7 @@ This project contains a Flutter application with several existing bugs and perfo
 3.  **Ensure Smooth Performance:** Verify that the application is stable, responsive, and performs well after your fixes.
 
 ## How to Submit
+
 1. Create a public GitHub repository for your solution.
 2. Push your changes before the 4 hour deadline.
 3. Include a **Solution.md** file with the following:
@@ -27,3 +28,7 @@ This project contains a Flutter application with several existing bugs and perfo
 4.  Begin debugging and fixing the issues.
 
 Good luck!
+
+First issue:
+
+Darwin/iOS settings were not set, after setting that local notif package requests for notifications

@@ -35,14 +35,24 @@ class NotificationService {
       '@mipmap/ic_launcher',
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
+      iOS: DarwinInitializationSettings(
+        requestSoundPermission: true,
+        requestBadgePermission: true,
+        requestAlertPermission: true,
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification,
+      ),
     );
 
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
     );
+  }
+
+  void onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) {
+    print('id $id');
   }
 
   Future<void> scheduleNotification({
