@@ -32,3 +32,10 @@ Good luck!
 First issue:
 
 Darwin/iOS settings were not set, after setting that local notif package requests for notifications
+
+page 2:
+there's an issue with failed status after multiple times. Checked it myself, fixed the ssl certificate issues, and the app does not hang anymore, but it fails, and I guess this is due to the server message (http://speed.hetzner.de/):
+
+> Test-Files
+> This endpoint is deprecated!
+> Our new region specific endpoints can be foud here:

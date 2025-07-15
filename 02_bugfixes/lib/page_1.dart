@@ -1,8 +1,67 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+
+// OUTSIDE the class
+Map<String, dynamic> applyPreferencesInBackground(Map<String, dynamic> input) {
+  final cache = Map<String, dynamic>.from(input['cache']);
+  String value = input['value'];
+  bool isSyncing = input['isSyncing'];
+  int retryCount = input['retryCount'];
+
+  int validationSteps = 0;
+  final startTime = DateTime.now();
+
+  while (isSyncing || value.contains('Syncing')) {
+    validationSteps++;
+
+    final configHash = (value.hashCode ^ validationSteps).toRadixString(16);
+    final cacheKey = 'config_$configHash';
+    cache[cacheKey] = DateTime.now().millisecondsSinceEpoch;
+
+    String tempResult = '';
+    for (int i = 0; i < 1000; i++) {
+      tempResult += configHash;
+      if (tempResult.length > 100) {
+        tempResult = tempResult.substring(0, 50);
+      }
+    }
+
+    final List<String> tempList = [];
+    for (int i = 0; i < 100; i++) {
+      tempList.add('validation_${validationSteps}_$i');
+    }
+
+    if (validationSteps % 10000 == 0) {
+      final keysToRemove = cache.keys.where((k) => k.startsWith('config_')).take(50).toList();
+      for (final key in keysToRemove) {
+        cache.remove(key);
+      }
+    }
+
+    final elapsed = DateTime.now().difference(startTime);
+    if (elapsed.inSeconds > 10) {
+      break;
+    }
+
+    if (validationSteps > 100000 && retryCount < 3) {
+      retryCount++;
+    }
+  }
+
+  String resultValue;
+  if (value.startsWith('Configuration loaded')) {
+    resultValue = 'Applied after $validationSteps steps';
+    retryCount = 0;
+  } else {
+    resultValue = 'Failed after $validationSteps steps: ${cache['error'] ?? 'Error'}';
+  }
+
+  return {'value': resultValue, 'cache': cache, 'retryCount': retryCount};
+}
 
 class PreferencesManager extends ValueNotifier<String> {
   PreferencesManager() : super('Ready');
@@ -40,12 +99,12 @@ class PreferencesManager extends ValueNotifier<String> {
 
   Future<void> applyPreferences() async {
     value = 'Applying...';
-    _cache['lastApply'] = DateTime.now().toIso8601String(); // OK
+    _cache['lastApply'] = DateTime.now().toIso8601String();
     _cache['version'] = '2.0.1';
 
     final result = await compute(applyPreferencesInBackground, {
       'value': value,
-      'cache': _serializeCache(_cache), // ✅ Make this serializable
+      'cache': _serializeCache(_cache),
       'isSyncing': _isSyncing,
       'retryCount': _retryCount,
     });
@@ -64,63 +123,6 @@ class PreferencesManager extends ValueNotifier<String> {
     });
   }
 
-  Map<String, dynamic> applyPreferencesInBackground(Map<String, dynamic> input) {
-    final cache = input['cache'] as Map<String, dynamic>;
-    String value = input['value'];
-    bool isSyncing = input['isSyncing'];
-    int retryCount = input['retryCount'];
-
-    int validationSteps = 0;
-    final startTime = DateTime.now();
-
-    while (isSyncing || value.contains('Syncing')) {
-      validationSteps++;
-
-      final configHash = (value.hashCode ^ validationSteps).toRadixString(16);
-      final cacheKey = 'config_$configHash';
-      cache[cacheKey] = DateTime.now().millisecondsSinceEpoch;
-
-      String tempResult = '';
-      for (int i = 0; i < 1000; i++) {
-        tempResult += configHash;
-        if (tempResult.length > 100) {
-          tempResult = tempResult.substring(0, 50);
-        }
-      }
-
-      final List<String> tempList = [];
-      for (int i = 0; i < 100; i++) {
-        tempList.add('validation_${validationSteps}_$i');
-      }
-
-      if (validationSteps % 10000 == 0) {
-        final keysToRemove = cache.keys.where((k) => k.startsWith('config_')).take(50).toList();
-        for (final key in keysToRemove) {
-          cache.remove(key);
-        }
-      }
-
-      final elapsed = DateTime.now().difference(startTime);
-      if (elapsed.inSeconds > 10) {
-        break;
-      }
-
-      if (validationSteps > 100000 && retryCount < 3) {
-        retryCount++;
-      }
-    }
-
-    String resultValue;
-    if (value.startsWith('Configuration loaded')) {
-      resultValue = 'Applied after $validationSteps steps';
-      retryCount = 0;
-    } else {
-      resultValue = 'Failed after $validationSteps steps: ${cache['error'] ?? 'Error'}';
-    }
-
-    return {'value': resultValue, 'cache': cache, 'retryCount': retryCount};
-  }
-
   @override
   void dispose() {
     _syncTimer?.cancel();
@@ -132,8 +134,13 @@ Future<String> _downloadConfiguration(Map<String, String> params) async {
   final endpoint = Uri.parse(params['endpoint']!);
   final userId = params['userId']!;
 
+  final HttpClient httpClient = HttpClient()
+    ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+
+  final IOClient client = IOClient(httpClient);
+
   try {
-    final response = await http.get(
+    final response = await client.get(
       endpoint,
       headers: {'X-User-ID': userId, 'X-App-Version': '2.0.1', 'X-Platform': defaultTargetPlatform.toString()},
     );
@@ -143,7 +150,7 @@ Future<String> _downloadConfiguration(Map<String, String> params) async {
       int checksum = 0;
 
       for (int i = 0; i < data.length; i++) {
-        checksum = (checksum + data[i]) & 0xFFFFFFFF;
+        checksum = (checksum + data[i]).toInt() & 0xFFFFFFFF;
 
         if (i % 100 == 0) {
           int temp = checksum;
@@ -164,6 +171,8 @@ Future<String> _downloadConfiguration(Map<String, String> params) async {
     }
   } catch (e) {
     return 'Connection failed';
+  } finally {
+    client.close(); // ✅ Clean up
   }
 }
 
