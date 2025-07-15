@@ -38,8 +38,9 @@ class ShiftHandoverService {
   Future<ShiftReport> addNote(HandoverNote note) async {
     await Future.delayed(const Duration(milliseconds: 300));
     try {
-      if (_cachedReport == null)
+      if (_cachedReport == null) {
         throw Failure('No report loaded to add note to.');
+      }
       _cachedReport = _cachedReport!.addNote(note);
       print('✅ [SERVICE] addNote -> total: ${_cachedReport?.notes.length}');
       return _cachedReport!;
