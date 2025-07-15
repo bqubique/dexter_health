@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shift_handover_challenge/src/core/di/injection_container.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/application/bloc/shift_handover_bloc.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/application/bloc/shift_handover_events.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/application/bloc/shift_handover_state.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/data/shift_handover_service.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/domain/note_type_enum.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/presentation/widgets/note_card.dart';
-import 'package:shift_handover_challenge/src/utils/context_extensions.dart';
 
 class ShiftHandoverScreen extends StatelessWidget {
   const ShiftHandoverScreen({Key? key}) : super(key: key);
@@ -11,8 +14,7 @@ class ShiftHandoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          ShiftHandoverBloc()..add(const LoadShiftReport('current-user-id')),
+      create: (_) => ShiftHandoverBloc(getIt<ShiftHandoverService>()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Shift Handover Report'),
@@ -39,14 +41,20 @@ class ShiftHandoverScreen extends StatelessWidget {
         body: BlocConsumer<ShiftHandoverBloc, ShiftHandoverState>(
           listener: (context, state) {
             if (state.error != null) {
-              context.showSnackbar(
-                  content: 'An error occurred: ${state.error}',
-                  backgroundColor: context.colorScheme.error);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('An error occurred: ${state.error}'),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
             }
             if (state.report?.isSubmitted ?? false) {
-              context.showSnackbar(
-                  content: 'Report submitted successfully!',
-                  backgroundColor: context.colorScheme.secondary);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Report submitted successfully!'),
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                ),
+              );
             }
           },
           builder: (context, state) {
@@ -59,10 +67,8 @@ class ShiftHandoverScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Failed to load shift report.',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    const Text('Failed to load shift report.',
+                        style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.refresh),
@@ -187,6 +193,12 @@ class ShiftHandoverScreen extends StatelessWidget {
               onPressed: state.isSubmitting
                   ? null
                   : () {
+                      if (textController.text.isNotEmpty) {
+                        context
+                            .read<ShiftHandoverBloc>()
+                            .add(AddNewNote(textController.text, selectedType));
+                      }
+
                       _showSubmitDialog(context);
                     },
               label: state.isSubmitting
@@ -207,6 +219,7 @@ class ShiftHandoverScreen extends StatelessWidget {
 
   void _showSubmitDialog(BuildContext context) {
     final summaryController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
