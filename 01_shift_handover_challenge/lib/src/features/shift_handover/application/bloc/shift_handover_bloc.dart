@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shift_handover_challenge/src/core/errors/failure.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/application/bloc/shift_handover_events.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/application/bloc/shift_handover_state.dart';
 import 'package:shift_handover_challenge/src/features/shift_handover/data/shift_handover_service.dart';
@@ -23,8 +24,10 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
     try {
       final report = await _service.getShiftReport(event.caregiverId);
       emit(state.copyWith(report: report, isLoading: false));
+    } on Failure catch (f) {
+      emit(state.copyWith(error: f.message, isLoading: false));
     } catch (e) {
-      emit(state.copyWith(error: e.toString(), isLoading: false));
+      emit(state.copyWith(error: 'Unexpected error', isLoading: false));
     }
   }
 
@@ -45,10 +48,10 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
     try {
       final updatedReport = await _service.addNote(newNote);
       emit(state.copyWith(report: updatedReport));
+    } on Failure catch (f) {
+      emit(state.copyWith(error: f.message));
     } catch (e) {
-      print("❌ Failed to add note: $e");
-      // Optionally emit error state here if needed:
-      emit(state.copyWith(error: e.toString()));
+      emit(state.copyWith(error: 'Unexpected error'));
     }
   }
 
@@ -62,17 +65,17 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
     try {
       final updatedReport = state.report!;
       updatedReport.submitReport(event.summary);
-
       final success = await _service.submitShiftReport(updatedReport);
-
       if (success) {
         emit(state.copyWith(report: updatedReport, isSubmitting: false));
       } else {
         emit(state.copyWith(
             error: 'Failed to submit report', isSubmitting: false));
       }
+    } on Failure catch (f) {
+      emit(state.copyWith(error: f.message, isSubmitting: false));
     } catch (e) {
-      emit(state.copyWith(error: e.toString(), isSubmitting: false));
+      emit(state.copyWith(error: 'Unexpected error', isSubmitting: false));
     }
   }
 }
