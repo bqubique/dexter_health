@@ -23,6 +23,7 @@ You should focus on the following areas. You are required to improve the quality
 - **Integration Testing:** Write integration tests that cover the entire feature usage, from the screens, down through the widgets, BLoC, and service layer.
 
 ## How to Submit
+
 1. Create a public GitHub repository for your solution.
 2. Push your changes before the 4 hour deadline.
 3. Include a **Solution.md** file with the following:
@@ -33,8 +34,8 @@ You should focus on the following areas. You are required to improve the quality
 
 ## Final Notes
 
-*   Feel free to use any packages you see fit, but try to stick to the patterns already present in the codebase.
-*   You can also add comments in your code to explain your decisions.
-*   The `ShiftHandoverService` is a fake service. You don't need to implement a real backend, data should be stored in memory.
+- Feel free to use any packages you see fit, but try to stick to the patterns already present in the codebase.
+- You can also add comments in your code to explain your decisions.
+- The `ShiftHandoverService` is a fake service. You don't need to implement a real backend, data should be stored in memory.
 
 Good luck!

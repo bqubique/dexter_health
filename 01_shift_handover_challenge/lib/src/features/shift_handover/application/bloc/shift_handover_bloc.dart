@@ -1,9 +1,12 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'dart:math';
 
-import 'shift_handover_models.dart';
-import 'shift_handover_service.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/domain/models/handover_note.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/domain/models/shift_report.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/domain/note_type_enum.dart';
+
+import '../../data/shift_handover_service.dart';
 
 abstract class ShiftHandoverEvent extends Equatable {
   const ShiftHandoverEvent();
@@ -95,7 +98,8 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
       authorId: state.report!.caregiverId,
     );
 
-    final updatedNotes = List<HandoverNote>.from(state.report!.notes)..add(newNote);
+    final updatedNotes = List<HandoverNote>.from(state.report!.notes)
+      ..add(newNote);
     final updatedReport = ShiftReport(
         id: state.report!.id,
         caregiverId: state.report!.caregiverId,
@@ -121,15 +125,15 @@ class ShiftHandoverBloc extends Bloc<ShiftHandoverEvent, ShiftHandoverState> {
       updatedReport.submitReport(event.summary);
 
       final success = await _service.submitShiftReport(updatedReport);
-      
+
       if (success) {
         emit(state.copyWith(report: updatedReport, isSubmitting: false));
       } else {
-        emit(state.copyWith(error: 'Failed to submit report', isSubmitting: false));
+        emit(state.copyWith(
+            error: 'Failed to submit report', isSubmitting: false));
       }
-
     } catch (e) {
       emit(state.copyWith(error: e.toString(), isSubmitting: false));
     }
   }
-} 
+}

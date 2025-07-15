@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shift_handover_challenge/features/shift_handover/note_card.dart';
-import 'package:shift_handover_challenge/features/shift_handover/shift_handover_bloc.dart';
-import 'package:shift_handover_challenge/features/shift_handover/shift_handover_models.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/application/bloc/shift_handover_bloc.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/domain/note_type_enum.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/presentation/widgets/note_card.dart';
+import 'package:shift_handover_challenge/src/utils/context_extensions.dart';
 
 class ShiftHandoverScreen extends StatelessWidget {
   const ShiftHandoverScreen({Key? key}) : super(key: key);
@@ -10,7 +11,8 @@ class ShiftHandoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ShiftHandoverBloc()..add(const LoadShiftReport('current-user-id')),
+      create: (context) =>
+          ShiftHandoverBloc()..add(const LoadShiftReport('current-user-id')),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Shift Handover Report'),
@@ -18,12 +20,16 @@ class ShiftHandoverScreen extends StatelessWidget {
           actions: [
             BlocBuilder<ShiftHandoverBloc, ShiftHandoverState>(
               builder: (context, state) {
-                if (state.isLoading && state.report == null) return const SizedBox.shrink();
+                if (state.isLoading && state.report == null) {
+                  return const SizedBox.shrink();
+                }
                 return IconButton(
                   icon: const Icon(Icons.refresh),
                   tooltip: 'Refresh Report',
                   onPressed: () {
-                    context.read<ShiftHandoverBloc>().add(const LoadShiftReport('current-user-id'));
+                    context
+                        .read<ShiftHandoverBloc>()
+                        .add(const LoadShiftReport('current-user-id'));
                   },
                 );
               },
@@ -33,20 +39,14 @@ class ShiftHandoverScreen extends StatelessWidget {
         body: BlocConsumer<ShiftHandoverBloc, ShiftHandoverState>(
           listener: (context, state) {
             if (state.error != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('An error occurred: ${state.error}'),
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-              );
+              context.showSnackbar(
+                  content: 'An error occurred: ${state.error}',
+                  backgroundColor: context.colorScheme.error);
             }
             if (state.report?.isSubmitted ?? false) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Report submitted successfully!'),
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                ),
-              );
+              context.showSnackbar(
+                  content: 'Report submitted successfully!',
+                  backgroundColor: context.colorScheme.secondary);
             }
           },
           builder: (context, state) {
@@ -59,12 +59,17 @@ class ShiftHandoverScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Failed to load shift report.', style: TextStyle(fontSize: 16)),
+                    const Text(
+                      'Failed to load shift report.',
+                      style: TextStyle(fontSize: 16),
+                    ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.refresh),
                       label: const Text('Try Again'),
-                      onPressed: () => context.read<ShiftHandoverBloc>().add(const LoadShiftReport('current-user-id')),
+                      onPressed: () => context
+                          .read<ShiftHandoverBloc>()
+                          .add(const LoadShiftReport('current-user-id')),
                     )
                   ],
                 ),
@@ -81,7 +86,10 @@ class ShiftHandoverScreen extends StatelessWidget {
                       child: Text(
                         'No notes added yet.\nUse the form below to add the first note.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.grey[600]),
                       ),
                     ),
                   )
@@ -90,7 +98,8 @@ class ShiftHandoverScreen extends StatelessWidget {
                     child: ListView.separated(
                       padding: const EdgeInsets.all(16.0),
                       itemCount: report.notes.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         return NoteCard(note: report.notes[index]);
                       },
@@ -127,14 +136,17 @@ class ShiftHandoverScreen extends StatelessWidget {
                     ),
                     onSubmitted: (value) {
                       if (value.isNotEmpty) {
-                        context.read<ShiftHandoverBloc>().add(AddNewNote(value, selectedType));
+                        context
+                            .read<ShiftHandoverBloc>()
+                            .add(AddNewNote(value, selectedType));
                         textController.clear();
                       }
                     },
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 4.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12.0),
@@ -166,7 +178,9 @@ class ShiftHandoverScreen extends StatelessWidget {
             }),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              icon: state.isSubmitting ? const SizedBox.shrink() : const Icon(Icons.send),
+              icon: state.isSubmitting
+                  ? const SizedBox.shrink()
+                  : const Icon(Icons.send),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
               ),
@@ -200,13 +214,18 @@ class ShiftHandoverScreen extends StatelessWidget {
         content: TextField(
           controller: summaryController,
           maxLines: 3,
-          decoration: const InputDecoration(hintText: "Enter a brief shift summary..."),
+          decoration:
+              const InputDecoration(hintText: "Enter a brief shift summary..."),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              context.read<ShiftHandoverBloc>().add(SubmitReport(summaryController.text));
+              context
+                  .read<ShiftHandoverBloc>()
+                  .add(SubmitReport(summaryController.text));
               Navigator.pop(dialogContext);
             },
             child: const Text('Submit'),

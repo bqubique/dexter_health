@@ -1,6 +1,8 @@
 import 'dart:math';
 
-import 'shift_handover_models.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/domain/models/handover_note.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/domain/models/shift_report.dart';
+import 'package:shift_handover_challenge/src/features/shift_handover/domain/note_type_enum.dart';
 
 class ShiftHandoverService {
   Future<ShiftReport> getShiftReport(String caregiverId) async {
@@ -24,13 +26,14 @@ class ShiftHandoverService {
 
   Future<bool> submitShiftReport(ShiftReport report) async {
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (Random().nextBool()) {
-      print('Report submitted successfully for caregiver ${report.caregiverId}');
+      print(
+          'Report submitted successfully for caregiver ${report.caregiverId}');
       return true;
     } else {
       print('Failed to submit report for caregiver ${report.caregiverId}');
       throw Exception('Network error: Failed to submit report.');
     }
   }
-} 
+}
