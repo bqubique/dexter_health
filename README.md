@@ -7,6 +7,11 @@ First task:
 - Added immutability with freezed (could've used equatable, but I was used to freezed, technically unnecessary).
 - Added unit tests for some of the features.
 - Was stuck with DI mocking and could not continue with integration testing.
+- CRUD was mentioned in the challenge readme, but I was honestly torn between removing a note and not removing. At the end I decided not to remove one for the following reason(s):
+  - There was no UI component that marked the removal of a note, I tried swiping the list items, or see if there was a component that removes (like a delete `IconButton`) a note, but ultimately decided not to.
+  - Also I was not sure how the flow works, maybe notes should not be removed at all in order to keep them safe.
+  - In order to have a delete note function, I was at least expecting to have a stub function definition of that in the service OR the bloc. I can understand the service might not have that since due to immutabiliy we could call a `copyWith` method to only update the list of notes, but in order to have that I was at least looking for a UI component for that to be more clear 🥲.
+  - I was really trying to stay in the line of the requirements as much as possible.
 
 Second task:
 
